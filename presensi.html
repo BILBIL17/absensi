@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presensi Kerja</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      color: #4CAF50;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 90%;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #4CAF50;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>Presensi Kerja</h1>
+  <button id="masukButton">Presensi Masuk</button>
+  <button id="pulangButton">Presensi Pulang</button>
+  <table>
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Nama</th>
+        <th>Tanggal</th>
+        <th>Hari</th>
+        <th>Jam Masuk</th>
+        <th>Jam Pulang</th>
+      </tr>
+    </thead>
+    <tbody id="presensiTable">
+    </tbody>
+  </table>
+
+  <script>
+    const masukButton = document.getElementById('masukButton');
+    const pulangButton = document.getElementById('pulangButton');
+    const presensiTable = document.getElementById('presensiTable');
+
+    // Simpan data presensi ke local storage
+    const saveToJSON = (data) => {
+      const existingData = JSON.parse(localStorage.getItem('presensiData')) || [];
+      const index = existingData.findIndex(item => item.nama === data.nama && item.tanggal === data.tanggal);
+
+      if (index >= 0) {
+        // Update jam pulang jika sudah ada data masuk
+        existingData[index].jamPulang = data.jamPulang;
+      } else {
+        // Tambah data baru
+        existingData.push(data);
+      }
+
+      localStorage.setItem('presensiData', JSON.stringify(existingData));
+    };
+
+    // Fungsi untuk mendapatkan nama hari
+    const getDayName = (date) => {
+      const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+      return days[date.getDay()];
+    };
+
+    // Fungsi untuk menampilkan data ke tabel
+    const addToTable = (data) => {
+      const rowIndex = Array.from(presensiTable.rows).findIndex(row => row.cells[1]?.textContent === data.nama && row.cells[2]?.textContent === data.tanggal);
+      
+      if (rowIndex >= 0) {
+        // Update jam pulang di baris yang sesuai
+        presensiTable.rows[rowIndex].cells[5].textContent = data.jamPulang || '-';
+      } else {
+        // Tambah baris baru
+        const row = presensiTable.insertRow();
+        const noCell = row.insertCell(0);
+        const namaCell = row.insertCell(1);
+        const tanggalCell = row.insertCell(2);
+        const hariCell = row.insertCell(3);
+        const jamMasukCell = row.insertCell(4);
+        const jamPulangCell = row.insertCell(5);
+
+        noCell.textContent = presensiTable.rows.length;
+        namaCell.textContent = data.nama;
+        tanggalCell.textContent = data.tanggal;
+        hariCell.textContent = data.hari;
+        jamMasukCell.textContent = data.jamMasuk || '-';
+        jamPulangCell.textContent = data.jamPulang || '-';
+      }
+    };
+
+    // Fungsi untuk presensi masuk
+    masukButton.addEventListener('click', () => {
+      const date = new Date();
+      const nama = prompt("Masukkan nama Anda:");
+      if (!nama) {
+        alert("Nama tidak boleh kosong!");
+        return;
+      }
+
+      const data = {
+        nama,
+        tanggal: date.toLocaleDateString('id-ID'),
+        hari: getDayName(date),
+        jamMasuk: date.toLocaleTimeString('id-ID'),
+        jamPulang: null
+      };
+
+      saveToJSON(data);
+      addToTable(data);
+    });
+
+    // Fungsi untuk presensi pulang
+    pulangButton.addEventListener('click', () => {
+      const date = new Date();
+      const nama = prompt("Masukkan nama Anda:");
+      if (!nama) {
+        alert("Nama tidak boleh kosong!");
+        return;
+      }
+
+      const data = {
+        nama,
+        tanggal: date.toLocaleDateString('id-ID'),
+        jamPulang: date.toLocaleTimeString('id-ID')
+      };
+
+      saveToJSON(data);
+      addToTable(data);
+    });
+
+    // Fungsi untuk memuat data dari local storage
+    const loadFromJSON = () => {
+      const data = JSON.parse(localStorage.getItem('presensiData')) || [];
+      data.forEach(addToTable);
+    };
+
+    // Load data saat halaman dimuat
+    window.onload = loadFromJSON;
+  </script>
+</body>
+</html>
